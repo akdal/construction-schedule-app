@@ -299,6 +299,34 @@ export const GanttChart: React.FC<GanttChartProps & {
             <div className="flex-none p-4 border-b border-gray-100 flex justify-between items-center bg-white z-20 shadow-sm relative">
                 <h3 className="text-lg font-bold text-gray-800">공정표 (Gantt Chart)</h3>
                 <div className="flex items-center gap-3">
+                    {/* Today Button */}
+                    <button
+                        onClick={() => {
+                            const container = document.getElementById('gantt-scroll-container');
+                            if (container) {
+                                // Scroll to show current date area
+                                const today = new Date();
+                                const startDate = result.tasks[0]?.start || today;
+                                const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                                const columnWidth = isHorizontalCompact ? compactColumnWidth : (viewMode === ViewMode.Month ? 100 : 40);
+                                let scrollPosition = 0;
+                                if (viewMode === ViewMode.Month) {
+                                    scrollPosition = (daysDiff / 30) * columnWidth;
+                                } else if (viewMode === ViewMode.Week) {
+                                    scrollPosition = (daysDiff / 7) * columnWidth;
+                                } else {
+                                    scrollPosition = daysDiff * columnWidth;
+                                }
+                                container.scrollLeft = Math.max(0, scrollPosition - 200);
+                            }
+                        }}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all flex items-center gap-1"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Today
+                    </button>
                     {/* View Mode Selection */}
                     <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
                         <button onClick={() => setViewMode(ViewMode.Day)} className={`px-3 py-1 text-sm rounded-md transition-all ${viewMode === ViewMode.Day ? 'bg-white shadow text-indigo-600 font-medium' : 'text-gray-500 hover:text-gray-700'}`}>Day</button>

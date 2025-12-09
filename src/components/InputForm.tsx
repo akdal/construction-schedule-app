@@ -9,7 +9,7 @@ interface InputFormProps {
 export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
     // Default values based on PRD example
     const [name, setName] = useState<string>('강남구 역삼동 근린생활시설');
-    const [startDate, setStartDate] = useState<Date>(new Date('2024-05-01'));
+    const [startDate, setStartDate] = useState<Date>(new Date()); // 오늘 날짜
     const [structureType, setStructureType] = useState<string>('RC');
 
     // Numeric inputs stored as strings to handle leading zeros and empty states
