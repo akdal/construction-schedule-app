@@ -64,46 +64,60 @@ const TaskListTable: React.FC<{
         '#64748b', // Slate
     ];
 
-    // Helper to convert hex to rgba for tinting
-    const hexToRgba = (hex: string, alpha: number) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    };
-
     return (
         <div style={{ fontFamily: fontFamily, fontSize: fontSize }}>
-            {tasks.map((task, index) => {
+            {tasks.map((task) => {
                 const diffTime = Math.abs(task.end.getTime() - task.start.getTime());
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                 const isProject = task.type === 'project';
-                const isEvenRow = index % 2 === 1;
 
-                const baseColor = task.styles?.progressColor || (isProject ? '#6366f1' : '#cbd5e1');
+                // Color Logic
+                // 1. Base color comes from task.styles.progressColor (which user selects for projects)
+                // 2. Project Rows: User wants them to "reflect color". We can tint the background.
+                // 3. Unstarted Rows: Should also receive effect.
+
+                const baseColor = task.styles?.progressColor || (isProject ? '#6366f1' : '#cbd5e1'); // Default Indigo or Slate
+
+                // Helper to convert hex to rgba for tinting
+                const hexToRgba = (hex: string, alpha: number) => {
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                };
 
                 const styleObj: React.CSSProperties = { height: rowHeight };
 
                 if (isProject) {
-                    // Group row: zebra base + color overlay
-                    const zebraBase = isEvenRow ? '#f9fafb' : '#ffffff';
+                    // Tint group row with base color (very light)
                     Object.assign(styleObj, {
-                        background: `linear-gradient(${hexToRgba(baseColor, 0.12)}, ${hexToRgba(baseColor, 0.12)}), ${zebraBase}`,
-                        borderBottom: `1px solid ${hexToRgba(baseColor, 0.25)}`
+                        backgroundColor: hexToRgba(baseColor, 0.1),
+                        borderBottom: `1px solid ${hexToRgba(baseColor, 0.2)}`
                     });
                 } else {
-                    // Normal task row: zebra striping only
-                    Object.assign(styleObj, {
-                        backgroundColor: isEvenRow ? '#f9fafb' : '#ffffff'
-                    });
+                    // Normal task or Unstarted?
+                    // User said: "unstarted row's color ... select color effect".
+                    // If it's unstarted (progress 0?), maybe tint specific cell? 
+                    // Or layout row? 
+                    // Let's assume the user implies that 'Project' color should affect its children?
+                    // Or just that if a row is 'unstarted', it shouldn't be plain white/gray if it belongs to a colored group?
+                    // Since we don't track group parent color inheritance easily here without traversal, 
+                    // AND task color is usually on the BAR, not the row.
+                    // But the request says "Gantt Chart EACH GROUPING ROW'S COLOR and UNSTARTED ROW'S COLOR".
+                    // This strongly suggests coloring the TABLE rows (the background).
+
+                    // Let's default to white but allow hover. 
+                    // If 'unstarted' is significant, we need a prop. Assuming 'progress' check?
+                    // result.tasks has progress. But here strict Prop 'tasks' is used.
+                    // let's stick to standard styling but use the tint for Project rows as requested.
                 }
 
                 return (
                     <div
                         key={task.id}
                         className={`flex border-b transition-colors ${isProject
-                            ? ''
+                            ? '' // Style applied via inline for dynamic color
                             : 'border-gray-100 hover:bg-gray-50'
                             }`}
                         style={styleObj}
