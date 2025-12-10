@@ -219,11 +219,7 @@ function App() {
       ['준공/인도', `${Math.round(assumptions.handoverPct * 100)}%`],
     ];
 
-    // Sheet 2: Gantt Schedule
-    const scheduleHeader = [
-      ['간트 일정표'],
-      ['Type', 'Name (Korean)', 'Name (English)', 'Start', 'End', 'Duration (days)'],
-    ];
+    const scheduleHeader = ['Type', 'Name (Korean)', 'Name (English)', 'Start', 'End', 'Duration (days)'];
 
     const taskData = scheduleResult.tasks.map(t => {
       const extTask = t as ExtendedTask;
@@ -237,19 +233,18 @@ function App() {
       ];
     });
 
-    // Create workbook with two sheets
+    // Create workbook with 2 sheets
     const wb = XLSX.utils.book_new();
 
     // Sheet 1: Input & Assumptions
     const wsInputAssumptions = XLSX.utils.aoa_to_sheet(inputAndAssumptionsData);
-    // Set column widths
     wsInputAssumptions['!cols'] = [{ wch: 25 }, { wch: 30 }];
     XLSX.utils.book_append_sheet(wb, wsInputAssumptions, '프로젝트 정보');
 
-    // Sheet 2: Schedule
-    const wsSchedule = XLSX.utils.aoa_to_sheet([...scheduleHeader, ...taskData]);
+    // Sheet 2: All tasks (전체 일정)
+    const wsSchedule = XLSX.utils.aoa_to_sheet([scheduleHeader, ...taskData]);
     wsSchedule['!cols'] = [{ wch: 10 }, { wch: 30 }, { wch: 35 }, { wch: 12 }, { wch: 12 }, { wch: 15 }];
-    XLSX.utils.book_append_sheet(wb, wsSchedule, '간트 일정');
+    XLSX.utils.book_append_sheet(wb, wsSchedule, '전체 일정');
 
     XLSX.writeFile(wb, `${currentInput.name}_schedule.xlsx`);
   };

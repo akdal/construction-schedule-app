@@ -285,11 +285,41 @@ export const GanttChart: React.FC<GanttChartProps & {
     const [language, setLanguage] = useState<'ko' | 'en'>('ko'); // Language toggle
     const containerRef = React.useRef<HTMLDivElement>(null);
     const headerScrollRef = React.useRef<HTMLDivElement>(null);
+    const topScrollBarRef = React.useRef<HTMLDivElement>(null);
     const bodyScrollRef = React.useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState(1200);
 
+    // Drag to scroll state
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStartX, setDragStartX] = useState(0);
+    const [scrollStartX, setScrollStartX] = useState(0);
+
     const handleLanguageToggle = () => {
         setLanguage(prev => prev === 'ko' ? 'en' : 'ko');
+    };
+
+    // Drag to scroll handlers
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!bodyScrollRef.current) return;
+        setIsDragging(true);
+        setDragStartX(e.pageX);
+        setScrollStartX(bodyScrollRef.current.scrollLeft);
+        e.preventDefault();
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging || !bodyScrollRef.current) return;
+        e.preventDefault();
+        const deltaX = e.pageX - dragStartX;
+        bodyScrollRef.current.scrollLeft = scrollStartX - deltaX;
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleMouseLeave = () => {
+        setIsDragging(false);
     };
 
     // Update task names based on language selection
@@ -397,6 +427,21 @@ export const GanttChart: React.FC<GanttChartProps & {
     const rowHeight = isVerticalCompact ? 32 : 50;
     const headerHeight = isVerticalCompact ? 40 : 50;
 
+    // Calculate total scroll width for top scrollbar
+    const totalScrollWidth = useMemo(() => {
+        const columnWidth = isHorizontalCompact ? compactColumnWidth : (viewMode === ViewMode.Month ? 100 : 40);
+        let totalColumns: number;
+        if (viewMode === ViewMode.Month) {
+            totalColumns = Math.ceil(result.totalDurationDays / 30);
+        } else if (viewMode === ViewMode.Week) {
+            totalColumns = Math.ceil(result.totalDurationDays / 7);
+        } else {
+            totalColumns = result.totalDurationDays;
+        }
+        // Add some extra width to ensure scrollbar matches gantt chart width
+        return listWidth + (columnWidth * totalColumns) + 100;
+    }, [isHorizontalCompact, compactColumnWidth, viewMode, result.totalDurationDays, listWidth]);
+
     // Sticky Header Style
     // We target the SVG header inside the library.
     // Since we can't easily inject styles into the library's internal SVG, 
@@ -419,10 +464,29 @@ export const GanttChart: React.FC<GanttChartProps & {
     // Current approach: Make the top control bar sticky.
     // For the SVG header, we'll try to apply a CSS class.
 
-    // Sync header scroll with body scroll
+    // Sync scrollbars (body scroll -> header & top scrollbar)
     const handleBodyScroll = () => {
-        if (headerScrollRef.current && bodyScrollRef.current) {
-            headerScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft;
+        if (!bodyScrollRef.current) return;
+        const scrollLeft = bodyScrollRef.current.scrollLeft;
+
+        if (headerScrollRef.current) {
+            headerScrollRef.current.scrollLeft = scrollLeft;
+        }
+        if (topScrollBarRef.current) {
+            topScrollBarRef.current.scrollLeft = scrollLeft;
+        }
+    };
+
+    // Sync scrollbars (top scrollbar -> body & header)
+    const handleTopScrollBarScroll = () => {
+        if (!topScrollBarRef.current) return;
+        const scrollLeft = topScrollBarRef.current.scrollLeft;
+
+        if (bodyScrollRef.current) {
+            bodyScrollRef.current.scrollLeft = scrollLeft;
+        }
+        if (headerScrollRef.current) {
+            headerScrollRef.current.scrollLeft = scrollLeft;
         }
     };
 
@@ -436,6 +500,27 @@ export const GanttChart: React.FC<GanttChartProps & {
 
     return (
         <div ref={containerRef} className="bg-white rounded-xl shadow-lg border border-gray-100 relative flex flex-col h-full overflow-hidden">
+            <style>{`
+                /* Custom scrollbar styling */
+                .gantt-scrollbar::-webkit-scrollbar {
+                    height: 12px;
+                }
+                .gantt-scrollbar::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                    border-radius: 6px;
+                }
+                .gantt-scrollbar::-webkit-scrollbar-thumb {
+                    background: #94a3b8;
+                    border-radius: 6px;
+                    border: 2px solid #f1f5f9;
+                }
+                .gantt-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #64748b;
+                }
+                .gantt-scrollbar::-webkit-scrollbar-thumb:active {
+                    background: #475569;
+                }
+            `}</style>
             {/* Control Bar - Always Top */}
             <div className="flex-none p-4 border-b border-gray-100 flex justify-between items-center bg-white z-20 shadow-sm relative">
                 <h3 className="text-lg font-bold text-gray-800">공정표</h3>
@@ -503,6 +588,16 @@ export const GanttChart: React.FC<GanttChartProps & {
                 </div>
             </div>
 
+            {/* Top Horizontal Scrollbar */}
+            <div
+                ref={topScrollBarRef}
+                onScroll={handleTopScrollBarScroll}
+                className="flex-none w-full overflow-x-auto overflow-y-hidden gantt-scrollbar"
+                style={{ height: '12px' }}
+            >
+                <div style={{ width: `${totalScrollWidth}px`, height: '1px' }} />
+            </div>
+
             {/* Split View Container */}
             <div className="flex-1 flex flex-col min-h-0 relative">
 
@@ -554,8 +649,13 @@ export const GanttChart: React.FC<GanttChartProps & {
                 <div
                     ref={bodyScrollRef}
                     onScroll={handleBodyScroll}
-                    className="flex-1 w-full overflow-scroll relative"
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseLeave}
+                    className="flex-1 w-full overflow-scroll relative gantt-scrollbar"
                     id="gantt-scroll-container"
+                    style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
                 >
                     <style>{`
                         /* Hide Header in Body Pane (Double safety) */
