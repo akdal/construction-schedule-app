@@ -306,17 +306,37 @@ export const GanttChart: React.FC<GanttChartProps & {
         }
     };
 
-    // Update task names based on language selection
+    // Update task names based on language selection and filter hidden children
     const tasksWithLanguage = useMemo(() => {
-        return result.tasks.map(task => {
-            const extTask = task as ExtendedTask;
-            return {
-                ...task,
-                name: language === 'ko'
-                    ? (extTask.nameKo || task.name)
-                    : (extTask.nameEn || task.name)
-            };
+        // First, create a map of project hideChildren states
+        const projectHideMap = new Map<string, boolean>();
+        result.tasks.forEach(task => {
+            if (task.type === 'project') {
+                projectHideMap.set(task.id, task.hideChildren || false);
+            }
         });
+
+        // Filter out hidden children and update names
+        return result.tasks
+            .filter(task => {
+                // Always show projects
+                if (task.type === 'project') return true;
+                // For tasks, check if parent project is collapsed
+                if (task.project) {
+                    const parentHidden = projectHideMap.get(task.project);
+                    if (parentHidden) return false;
+                }
+                return true;
+            })
+            .map(task => {
+                const extTask = task as ExtendedTask;
+                return {
+                    ...task,
+                    name: language === 'ko'
+                        ? (extTask.nameKo || task.name)
+                        : (extTask.nameEn || task.name)
+                };
+            });
     }, [result.tasks, language]);
 
     React.useEffect(() => {
