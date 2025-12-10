@@ -27,7 +27,7 @@ export const DashboardSummary: React.FC<DashboardSummaryProps> = ({ result, star
     };
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4 mb-4 sm:mb-6">
             {/* 1. 착공일 Card */}
             <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4 flex items-start gap-3">

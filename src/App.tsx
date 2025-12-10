@@ -363,12 +363,22 @@ function App() {
         onDelete={handleDeleteProject}
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Mobile Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Left Sidebar: Tabbed Input Form & Assumptions - Independent Scroll */}
         <aside
-          className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out flex-none ${isSidebarOpen ? 'w-96 translate-x-0' : 'w-0 -translate-x-full opacity-0'
-            }`}
-          style={{ height: 'calc(100vh - 64px)' }}
+          className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out flex-none
+            fixed md:relative inset-y-0 left-0 z-50 md:z-auto
+            ${isSidebarOpen ? 'w-[85vw] sm:w-80 md:w-96 translate-x-0' : 'w-0 -translate-x-full opacity-0 md:opacity-100'}
+          `}
+          style={{ height: 'calc(100vh - 80px)', top: '80px' }}
         >
           {/* Tab Headers */}
           <div className="flex-none border-b border-gray-200 bg-gray-50">

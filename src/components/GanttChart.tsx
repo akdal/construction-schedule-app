@@ -40,7 +40,7 @@ const TaskListHeader: React.FC<{
                         size="sm"
                         className="h-auto px-1.5 py-0.5 text-[10px] bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200"
                     >
-                        {language === 'ko' ? '한' : 'E'}
+                        {language === 'ko' ? '한' : 'EN'}
                     </Button>
                 </div>
                 <div className="flex gap-1">
