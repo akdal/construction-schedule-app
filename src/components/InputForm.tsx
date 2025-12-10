@@ -12,16 +12,16 @@ interface InputFormProps {
 }
 
 export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
-    // Default values - empty for new project
-    const [name, setName] = useState<string>('Untitled');
+    // Default values
+    const [name, setName] = useState<string>('이름 없는 프로젝트');
     const [startDate, setStartDate] = useState<Date>(new Date()); // 오늘 날짜
     const [structureType, setStructureType] = useState<string>('RC');
 
     // Numeric inputs stored as strings to handle leading zeros and empty states
-    const [grossFloorArea, setGrossFloorArea] = useState<string>('');
-    const [undergroundFloors, setUndergroundFloors] = useState<string>('0');
-    const [abovegroundFloors, setAbovegroundFloors] = useState<string>('');
-    const [totalCost, setTotalCost] = useState<string>(''); // Store as string for input, convert to number for calculation
+    const [grossFloorArea, setGrossFloorArea] = useState<string>('990');
+    const [undergroundFloors, setUndergroundFloors] = useState<string>('1');
+    const [abovegroundFloors, setAbovegroundFloors] = useState<string>('5');
+    const [totalCost, setTotalCost] = useState<string>('2000000000'); // Store as string for input, convert to number for calculation
 
     const [costPerPyInput, setCostPerPyInput] = useState<string>(''); // For per pyeong input
 
