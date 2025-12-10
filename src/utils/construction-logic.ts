@@ -1,6 +1,12 @@
 import { addDays } from 'date-fns';
 import type { Task } from 'gantt-task-react';
 
+// Extended Task type with Korean/English names
+export interface ExtendedTask extends Task {
+    nameKo: string;
+    nameEn: string;
+}
+
 export interface ProjectInput {
     name: string;
     startDate: Date;
@@ -153,7 +159,7 @@ export const DEFAULT_ASSUMPTIONS: ScheduleAssumptions = {
 export interface ScheduleResult {
     totalDurationDays: number;
     completionDate: Date;
-    tasks: Task[];
+    tasks: ExtendedTask[];
     costPerPy: number; // KRW per 3.3m2
 }
 
@@ -225,9 +231,9 @@ export const generateScheduleTasks = (
     input: ProjectInput,
     totalDuration: number,
     assumptions: ScheduleAssumptions = DEFAULT_ASSUMPTIONS
-): Task[] => {
+): ExtendedTask[] => {
     const { startDate } = input;
-    const tasks: Task[] = [];
+    const tasks: ExtendedTask[] = [];
     let currentDate = startDate;
 
     // Use assumptions for phase percentages
@@ -256,7 +262,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: currentDate,
         end: f_pre,
-        name: 'Preconstruction (사전 준비)',
+        name: '사전 준비',
+        nameKo: '사전 준비',
+        nameEn: 'Preconstruction',
         id: 'phase-pre',
         type: 'project',
         progress: 0,
@@ -270,7 +278,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: currentDate,
         end: task_survey_end,
-        name: '현장 조사 및 측량 (Site Survey)',
+        name: '현장 조사 및 측량',
+        nameKo: '현장 조사 및 측량',
+        nameEn: 'Site Survey',
         id: 'task-survey',
         type: 'task',
         progress: 100,
@@ -283,7 +293,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: task_permit_start,
         end: task_permit_end,
-        name: '인허가 (Permitting)',
+        name: '인허가',
+        nameKo: '인허가',
+        nameEn: 'Permitting',
         id: 'task-permit',
         type: 'task',
         progress: 50,
@@ -297,7 +309,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: task_bid_start,
         end: task_bid_end,
-        name: '업체 선정 및 계약 (Contracts)',
+        name: '업체 선정 및 계약',
+        nameKo: '업체 선정 및 계약',
+        nameEn: 'Contracts',
         id: 'task-bid',
         type: 'task',
         progress: 10,
@@ -314,7 +328,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: currentDate,
         end: earth_end,
-        name: 'Foundation (토목 및 기초)',
+        name: '토목 및 기초',
+        nameKo: '토목 및 기초',
+        nameEn: 'Foundation',
         id: 'phase-earth',
         type: 'project',
         progress: 0,
@@ -332,7 +348,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: currentDate,
         end: t_demo_end,
-        name: '철거 및 가설 펜스 (Demolition)',
+        name: '철거 및 가설 펜스',
+        nameKo: '철거 및 가설 펜스',
+        nameEn: 'Demolition',
         id: 'task-demo',
         type: 'task',
         progress: 0,
@@ -346,7 +364,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: t_excav_start,
         end: t_excav_end,
-        name: '터파기 및 흙막이 (Excavation)',
+        name: '터파기 및 흙막이',
+        nameKo: '터파기 및 흙막이',
+        nameEn: 'Excavation',
         id: 'task-excav',
         type: 'task',
         progress: 0,
@@ -360,7 +380,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: t_foun_start,
         end: t_foun_end,
-        name: '기초 콘크리트 타설 (Foundation Pour)',
+        name: '기초 콘크리트 타설',
+        nameKo: '기초 콘크리트 타설',
+        nameEn: 'Foundation Pour',
         id: 'task-foun',
         type: 'task',
         progress: 0,
@@ -382,7 +404,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: currentDate,
         end: struct_end_date,
-        name: 'Structure (골조 공사)',
+        name: '골조 공사',
+        nameKo: '골조 공사',
+        nameEn: 'Structure',
         id: 'phase-struct',
         type: 'project',
         progress: 0,
@@ -402,7 +426,9 @@ export const generateScheduleTasks = (
         tasks.push({
             start: f_start,
             end: f_end,
-            name: `${i}층 골조 (Floor ${i} Framing)`,
+            name: `${i}층 골조`,
+            nameKo: `${i}층 골조`,
+            nameEn: `Floor ${i} Framing`,
             id: f_id,
             type: 'task',
             progress: 0,
@@ -425,7 +451,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: ext_start,
         end: ext_end,
-        name: 'Exterior (외부 마감)',
+        name: '외부 마감',
+        nameKo: '외부 마감',
+        nameEn: 'Exterior',
         id: 'phase-ext',
         type: 'project',
         progress: 0,
@@ -437,7 +465,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: ext_start,
         end: addDays(ext_start, Math.floor(ext_dur * 0.6)),
-        name: '창호 및 유리 (Windows/Glass)',
+        name: '창호 및 유리',
+        nameKo: '창호 및 유리',
+        nameEn: 'Windows/Glass',
         id: 'task-win',
         type: 'task',
         progress: 0,
@@ -449,7 +479,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: addDays(ext_start, Math.floor(ext_dur * 0.4)),
         end: ext_end,
-        name: '외벽 마감 (Brick/Stone/Paint)',
+        name: '외벽 마감',
+        nameKo: '외벽 마감',
+        nameEn: 'Facade (Brick/Stone/Paint)',
         id: 'task-facade',
         type: 'task',
         progress: 0,
@@ -467,7 +499,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: int_start,
         end: int_end,
-        name: 'Interior & MEP (내부 및 설비)',
+        name: '내부 및 설비',
+        nameKo: '내부 및 설비',
+        nameEn: 'Interior & MEP',
         id: 'phase-int',
         type: 'project',
         progress: 0,
@@ -485,7 +519,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: int_start,
         end: t_mep_end,
-        name: '설비 배관/배선 (MEP Rough-in)',
+        name: '설비 배관/배선',
+        nameKo: '설비 배관/배선',
+        nameEn: 'MEP Rough-in',
         id: 'task-mep',
         type: 'task',
         progress: 0,
@@ -499,7 +535,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: t_dry_start,
         end: t_dry_end,
-        name: '벽체 및 천장 (Drywall/Ceiling)',
+        name: '벽체 및 천장',
+        nameKo: '벽체 및 천장',
+        nameEn: 'Drywall/Ceiling',
         id: 'task-dry',
         type: 'task',
         progress: 0,
@@ -513,7 +551,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: t_fin_start,
         end: t_fin_end,
-        name: '바닥/도장/가구 (Finishes/Flooring)',
+        name: '바닥/도장/가구',
+        nameKo: '바닥/도장/가구',
+        nameEn: 'Finishes/Flooring',
         id: 'task-fin',
         type: 'task',
         progress: 0,
@@ -529,7 +569,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: final_start,
         end: final_end,
-        name: 'Handover (준공 및 인도)',
+        name: '준공 및 인도',
+        nameKo: '준공 및 인도',
+        nameEn: 'Handover',
         id: 'phase-final',
         type: 'project',
         progress: 0,
@@ -544,7 +586,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: final_start,
         end: addDays(final_start, cleanDays),
-        name: '준공 청소 (Final Cleaning)',
+        name: '준공 청소',
+        nameKo: '준공 청소',
+        nameEn: 'Final Cleaning',
         id: 'task-clean',
         type: 'task',
         progress: 0,
@@ -556,7 +600,9 @@ export const generateScheduleTasks = (
     tasks.push({
         start: addDays(final_start, cleanDays),
         end: final_end,
-        name: '사용승인 검사 및 입주 (Inspection & Move-in)',
+        name: '사용승인 검사 및 입주',
+        nameKo: '사용승인 검사 및 입주',
+        nameEn: 'Inspection & Move-in',
         id: 'task-inspect',
         type: 'task',
         progress: 0,

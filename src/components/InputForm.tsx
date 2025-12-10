@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import type { ProjectInput } from '../utils/construction-logic';
-import { Calendar, Building, Layers, Briefcase, Calculator } from 'lucide-react';
+import { Layers, Briefcase, Calculator } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface InputFormProps {
     onCalculate: (data: ProjectInput) => void;
 }
 
 export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
-    // Default values based on PRD example
-    const [name, setName] = useState<string>('강남구 역삼동 근린생활시설');
+    // Default values - empty for new project
+    const [name, setName] = useState<string>('Untitled');
     const [startDate, setStartDate] = useState<Date>(new Date()); // 오늘 날짜
     const [structureType, setStructureType] = useState<string>('RC');
 
     // Numeric inputs stored as strings to handle leading zeros and empty states
-    const [grossFloorArea, setGrossFloorArea] = useState<string>('990');
-    const [undergroundFloors, setUndergroundFloors] = useState<string>('1');
-    const [abovegroundFloors, setAbovegroundFloors] = useState<string>('5');
-    const [totalCost, setTotalCost] = useState<string>('2000000000'); // Store as string for input, convert to number for calculation
+    const [grossFloorArea, setGrossFloorArea] = useState<string>('');
+    const [undergroundFloors, setUndergroundFloors] = useState<string>('0');
+    const [abovegroundFloors, setAbovegroundFloors] = useState<string>('');
+    const [totalCost, setTotalCost] = useState<string>(''); // Store as string for input, convert to number for calculation
 
     const [costPerPyInput, setCostPerPyInput] = useState<string>(''); // For per pyeong input
 
@@ -135,16 +140,15 @@ export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 h-full overflow-y-auto">
-            <h2 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
-                <Building className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-xl font-bold mb-6 text-gray-800">
                 프로젝트 개요
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Project Name */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">프로젝트명</label>
-                    <input
+                    <Label className="block text-sm font-medium text-gray-700 mb-1">프로젝트명</Label>
+                    <Input
                         type="text"
                         name="name"
                         value={name}
@@ -156,31 +160,24 @@ export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
 
                 {/* Start Date */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">착공 예정일</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                            type="date"
-                            name="startDate"
-                            value={startDate.toISOString().split('T')[0]}
-                            onChange={(e) => setStartDate(new Date(e.target.value))}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                            required
-                        />
-                    </div>
+                    <Label className="block text-sm font-medium text-gray-700 mb-1">착공일</Label>
+                    <DatePicker
+                        date={startDate}
+                        onDateChange={(date) => date && setStartDate(date)}
+                        placeholder="착공일 선택"
+                        className="w-full"
+                    />
                 </div>
 
                 {/* Area & Floors */}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">연면적 (m²)</label>
+                        <Label className="block text-sm font-medium text-gray-700 mb-1">연면적 (m²)</Label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Layers className="h-4 w-4 text-gray-400" />
                             </div>
-                            <input
+                            <Input
                                 type="text" // Changed to text to handle string state
                                 name="grossFloorArea"
                                 value={grossFloorArea}
@@ -191,30 +188,30 @@ export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">구조</label>
+                        <Label className="block text-sm font-medium text-gray-700 mb-1">구조</Label>
                         <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                                 <Briefcase className="h-4 w-4 text-gray-400" />
                             </div>
-                            <select
-                                name="structureType"
-                                value={structureType}
-                                onChange={(e) => setStructureType(e.target.value)}
-                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                            >
-                                <option value="RC">철근콘크리트</option>
-                                <option value="SRC">철골철근콘크리트</option>
-                                <option value="Steel">철골조</option>
-                                <option value="Wood">목구조</option>
-                            </select>
+                            <Select value={structureType} onValueChange={setStructureType}>
+                                <SelectTrigger className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="RC">철근콘크리트</SelectItem>
+                                    <SelectItem value="SRC">철골철근콘크리트</SelectItem>
+                                    <SelectItem value="Steel">철골조</SelectItem>
+                                    <SelectItem value="Wood">목구조</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">지하 층수</label>
-                        <input
+                        <Label className="block text-sm font-medium text-gray-700 mb-1">지하 층수</Label>
+                        <Input
                             type="text" // Changed to text to handle string state
                             name="undergroundFloors"
                             value={undergroundFloors}
@@ -224,8 +221,8 @@ export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">지상 층수</label>
-                        <input
+                        <Label className="block text-sm font-medium text-gray-700 mb-1">지상 층수</Label>
+                        <Input
                             type="text" // Changed to text to handle string state
                             name="abovegroundFloors"
                             value={abovegroundFloors}
@@ -238,14 +235,14 @@ export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
 
                 {/* Cost Input Section */}
                 <div className="pt-4 border-t border-gray-100">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">예상 공사비 (Total & Per Py)</label>
+                    <Label className="block text-sm font-medium text-gray-700 mb-2">예상 공사비 (Total & Per Py)</Label>
 
                     {/* Dual Inputs Grid */}
                     <div className="grid grid-cols-2 gap-2 mb-2">
                         {/* Total Cost Input */}
                         <div className="relative group">
-                            <label className="text-[10px] text-gray-500 absolute top-1 left-2">총 공사비</label>
-                            <input
+                            <Label className="text-[10px] text-gray-500 absolute top-1 left-2">총 공사비</Label>
+                            <Input
                                 type="text"
                                 name="totalCostDisplay"
                                 value={formatNumber(totalCost)}
@@ -257,8 +254,8 @@ export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
 
                         {/* Per Py Input */}
                         <div className="relative group">
-                            <label className="text-[10px] text-gray-500 absolute top-1 left-2">평당 단가</label>
-                            <input
+                            <Label className="text-[10px] text-gray-500 absolute top-1 left-2">평당 단가</Label>
+                            <Input
                                 type="text"
                                 name="costPerPyInput"
                                 value={formatNumber(costPerPyInput)}
@@ -273,18 +270,15 @@ export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
                         <span>* 자동 변환 계산됩니다</span>
                     </div>
 
-                    <p className="text-xs text-indigo-600 mt-2 bg-indigo-50 p-2 rounded border border-indigo-100">
-                        ℹ️ 평당 800만원 이상 시 '고급 마감'으로 간주하여 공기가 1.1배 할증됩니다.
-                    </p>
                 </div>
 
-                <button
+                <Button
                     type="submit"
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md mt-6 flex justify-center items-center"
                 >
                     <Calculator className="w-4 h-4 mr-2" />
-                    계산하기 (Calculate)
-                </button>
+                    공정표 생성 (Create Schedule)
+                </Button>
             </form>
         </div>
     );

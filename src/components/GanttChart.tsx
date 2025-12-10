@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Gantt, ViewMode } from 'gantt-task-react';
 import type { Task } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
-import type { ScheduleResult } from '../utils/construction-logic';
+import type { ScheduleResult, ExtendedTask } from '../utils/construction-logic';
+import { Button } from '@/components/ui/button';
 
 interface GanttChartProps {
     result: ScheduleResult;
@@ -12,12 +13,14 @@ interface GanttChartProps {
 // Custom Header Component
 const TaskListHeader: React.FC<{
     headerHeight: number;
-    rowWidth: string;
     fontFamily: string;
     fontSize: string;
     onExpandAll: () => void;
     onCollapseAll: () => void;
-}> = ({ headerHeight, fontFamily, fontSize, onExpandAll, onCollapseAll }) => {
+    showDetailColumns: boolean;
+    language: 'ko' | 'en';
+    onLanguageToggle: () => void;
+}> = ({ headerHeight, fontFamily, fontSize, onExpandAll, onCollapseAll, showDetailColumns, language, onLanguageToggle }) => {
     return (
         <div
             style={{
@@ -28,17 +31,87 @@ const TaskListHeader: React.FC<{
             }}
             className="flex border-b border-gray-200 bg-gray-50 text-gray-700 font-bold items-center sticky z-10"
         >
-            <div className="flex-1 p-2 border-r border-gray-200 flex items-center justify-between" style={{ minWidth: '350px' }}>
-                <span>공정명</span>
+            <div className="p-2 border-r border-gray-200 flex items-center justify-between" style={{ width: '250px', flexShrink: 0 }}>
+                <div className="flex items-center gap-1.5">
+                    <span>공정명</span>
+                    <Button
+                        onClick={onLanguageToggle}
+                        variant="outline"
+                        size="sm"
+                        className="h-auto px-1.5 py-0.5 text-[10px] bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200"
+                    >
+                        {language === 'ko' ? '한' : 'E'}
+                    </Button>
+                </div>
                 <div className="flex gap-1">
-                    <button onClick={onExpandAll} className="px-1.5 py-0.5 text-[10px] bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-600">전체 펼침</button>
-                    <button onClick={onCollapseAll} className="px-1.5 py-0.5 text-[10px] bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-600">전체 접힘</button>
+                    <Button onClick={onExpandAll} variant="outline" size="sm" className="h-auto px-1.5 py-0.5 text-[10px] text-gray-600">펼치기</Button>
+                    <Button onClick={onCollapseAll} variant="outline" size="sm" className="h-auto px-1.5 py-0.5 text-[10px] text-gray-600">접기</Button>
                 </div>
             </div>
-            <div className="w-[100px] p-2 border-r border-gray-200 text-center">시작일</div>
-            <div className="w-[100px] p-2 border-r border-gray-200 text-center">종료일</div>
-            <div className="w-[80px] p-2 text-center">기간</div>
+            {showDetailColumns && (
+                <>
+                    <div className="w-[90px] p-2 border-r border-gray-200 text-center text-xs flex-shrink-0">시작일</div>
+                    <div className="w-[90px] p-2 border-r border-gray-200 text-center text-xs flex-shrink-0">종료일</div>
+                    <div className="w-[50px] p-2 border-r border-gray-200 text-center text-xs flex-shrink-0">기간</div>
+                    <div className="w-[50px] p-2 text-center text-xs flex-shrink-0">공정율</div>
+                </>
+            )}
         </div >
+    );
+};
+
+// Custom Tooltip Component
+const CustomTooltip: React.FC<{
+    task: Task;
+    fontSize: string;
+    fontFamily: string;
+}> = ({ task, fontSize, fontFamily }) => {
+    const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const duration = Math.ceil((task.end.getTime() - task.start.getTime()) / (1000 * 60 * 60 * 24));
+
+    return (
+        <div
+            style={{
+                fontFamily,
+                fontSize,
+                padding: '8px 12px',
+                backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                color: 'white',
+                borderRadius: '6px',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                minWidth: '200px'
+            }}
+        >
+            <div style={{ fontWeight: '600', marginBottom: '6px', fontSize: '14px' }}>
+                {task.name}
+            </div>
+            <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)' }}>
+                <div style={{ marginBottom: '3px' }}>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>시작: </span>
+                    {formatDate(task.start)}
+                </div>
+                <div style={{ marginBottom: '3px' }}>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>종료: </span>
+                    {formatDate(task.end)}
+                </div>
+                <div>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>기간: </span>
+                    {duration}일
+                </div>
+                {task.progress !== undefined && (
+                    <div style={{ marginTop: '3px' }}>
+                        <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>진행률: </span>
+                        {task.progress}%
+                    </div>
+                )}
+            </div>
+        </div>
     );
 };
 
@@ -49,8 +122,10 @@ const TaskListTable: React.FC<{
     fontFamily: string;
     fontSize: string;
     onExpanderClick: (task: Task) => void;
-    onColorChange: (task: Task, color: string) => void; // New Prop
-}> = ({ rowHeight, tasks, fontFamily, fontSize, onExpanderClick, onColorChange }) => {
+    onColorChange: (task: Task, color: string) => void;
+    showDetailColumns: boolean;
+    language: 'ko' | 'en';
+}> = ({ rowHeight, tasks, fontFamily, fontSize, onExpanderClick, onColorChange, showDetailColumns, language }) => {
 
     // Predefined colors
     const PALETTE = [
@@ -123,7 +198,8 @@ const TaskListTable: React.FC<{
                         style={styleObj}
                     >
                         <div
-                            className="flex-1 p-2 border-r border-gray-100 flex items-center min-w-[350px]"
+                            className="p-2 border-r border-gray-100 flex items-center flex-shrink-0"
+                            style={{ width: '250px' }}
                             title={task.name}
                         >
                             {/* Color Indicator / Picker - Only for Projects (Groups) */}
@@ -158,7 +234,7 @@ const TaskListTable: React.FC<{
                                 style={{
                                     paddingLeft: isProject ? '0px' : '4px',
                                     fontWeight: isProject ? '800' : '400',
-                                    color: isProject ? '#111827' : '#4b5563',
+                                    color: isProject ? '#1f2937' : '#374151',
                                     cursor: isProject ? 'pointer' : 'default'
                                 }}
                                 onClick={() => isProject && onExpanderClick(task)}
@@ -168,18 +244,27 @@ const TaskListTable: React.FC<{
                                         {task.hideChildren ? '▶' : '▼'}
                                     </span>
                                 )}
-                                {task.name}
+                                {language === 'ko'
+                                    ? (task as ExtendedTask).nameKo || task.name
+                                    : (task as ExtendedTask).nameEn || task.name}
                             </div>
                         </div>
-                        <div className="w-[100px] p-2 border-r border-gray-100 flex items-center justify-center text-sm text-gray-600">
-                            {task.start.toISOString().split('T')[0]}
-                        </div>
-                        <div className="w-[100px] p-2 border-r border-gray-100 flex items-center justify-center text-sm text-gray-600">
-                            {task.end.toISOString().split('T')[0]}
-                        </div>
-                        <div className="w-[80px] p-2 border-r border-gray-100 flex items-center justify-center text-sm text-gray-500">
-                            {diffDays}일
-                        </div>
+                        {showDetailColumns && (
+                            <>
+                                <div className="w-[90px] p-2 border-r border-gray-100 flex items-center justify-center text-xs text-gray-700 flex-shrink-0">
+                                    {task.start.toISOString().split('T')[0]}
+                                </div>
+                                <div className="w-[90px] p-2 border-r border-gray-100 flex items-center justify-center text-xs text-gray-700 flex-shrink-0">
+                                    {task.end.toISOString().split('T')[0]}
+                                </div>
+                                <div className="w-[50px] p-2 border-r border-gray-100 flex items-center justify-center text-xs text-gray-700 flex-shrink-0">
+                                    {diffDays}일
+                                </div>
+                                <div className="w-[50px] p-2 border-r border-gray-100 flex items-center justify-center text-xs font-medium text-indigo-700 flex-shrink-0">
+                                    {task.progress}%
+                                </div>
+                            </>
+                        )}
                     </div>
                 );
             })}
@@ -190,14 +275,35 @@ const TaskListTable: React.FC<{
 
 export const GanttChart: React.FC<GanttChartProps & {
     onColorChange?: (task: Task, color: string) => void;
-    onExpandAll?: () => void; // New
-    onCollapseAll?: () => void; // New
+    onExpandAll?: () => void;
+    onCollapseAll?: () => void;
 }> = ({ result, onExpanderClick, onColorChange, onExpandAll, onCollapseAll }) => {
     const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Month);
     const [isHorizontalCompact, setIsHorizontalCompact] = useState(false); // 가로 Compact
     const [isVerticalCompact, setIsVerticalCompact] = useState(false); // 세로 Compact
+    const [showDetailColumns, setShowDetailColumns] = useState(true); // 상세 컬럼 표시
+    const [language, setLanguage] = useState<'ko' | 'en'>('ko'); // Language toggle
     const containerRef = React.useRef<HTMLDivElement>(null);
+    const headerScrollRef = React.useRef<HTMLDivElement>(null);
+    const bodyScrollRef = React.useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState(1200);
+
+    const handleLanguageToggle = () => {
+        setLanguage(prev => prev === 'ko' ? 'en' : 'ko');
+    };
+
+    // Update task names based on language selection
+    const tasksWithLanguage = useMemo(() => {
+        return result.tasks.map(task => {
+            const extTask = task as ExtendedTask;
+            return {
+                ...task,
+                name: language === 'ko'
+                    ? (extTask.nameKo || task.name)
+                    : (extTask.nameEn || task.name)
+            };
+        });
+    }, [result.tasks, language]);
 
     React.useEffect(() => {
         if (!containerRef.current) return;
@@ -209,6 +315,42 @@ export const GanttChart: React.FC<GanttChartProps & {
         resizeObserver.observe(containerRef.current);
         return () => resizeObserver.disconnect();
     }, []);
+
+    // Day View: 요일 제거하고 숫자만 표시
+    React.useEffect(() => {
+        if (viewMode !== ViewMode.Day || !containerRef.current) return;
+
+        const removeWeekdays = () => {
+            const textElements = containerRef.current?.querySelectorAll('.header-pane svg text');
+            textElements?.forEach((el) => {
+                const text = el.textContent || '';
+                // "월, 15" or "Mon, 15" 형태에서 숫자만 추출
+                if (text.includes(',')) {
+                    const match = text.match(/\d+/);
+                    if (match) {
+                        el.textContent = match[0];
+                    }
+                }
+            });
+        };
+
+        const timer = setTimeout(removeWeekdays, 100);
+
+        // 스크롤 시에도 재적용
+        const observer = new MutationObserver(() => {
+            setTimeout(removeWeekdays, 50);
+        });
+
+        const headerPane = containerRef.current?.querySelector('.header-pane');
+        if (headerPane) {
+            observer.observe(headerPane, { childList: true, subtree: true });
+        }
+
+        return () => {
+            clearTimeout(timer);
+            observer.disconnect();
+        };
+    }, [viewMode, tasksWithLanguage]);
 
     // Calculate Compact Width
     // If compact, we need to fit all tasks in the available width minus the list width.
@@ -224,7 +366,10 @@ export const GanttChart: React.FC<GanttChartProps & {
     // Total Duration in days = result.totalDurationDays
     // Available width approx = window.innerWidth - 630 (list) - 100 (padding)
     // Minimally, let's just set a very small column width.
-    const listWidth = 630; // matches listCellWidth
+    // 상세 컬럼 표시 여부에 따라 리스트 너비 조정
+    // 공정명(250) + 시작일(90) + 종료일(90) + 기간(50) + 공정율(50) = 530
+    // 공정명만 = 250
+    const listWidth = showDetailColumns ? 530 : 250;
 
     // 가로 Compact: 타임라인을 섹션 너비에 맞춤
     const compactColumnWidth = useMemo(() => {
@@ -246,7 +391,7 @@ export const GanttChart: React.FC<GanttChartProps & {
 
         const widthPerColumn = availableWidth / Math.max(totalColumns, 1);
         return Math.max(Math.floor(widthPerColumn), 20);
-    }, [isHorizontalCompact, result.tasks, result.totalDurationDays, containerWidth, viewMode]);
+    }, [isHorizontalCompact, result.tasks, result.totalDurationDays, containerWidth, viewMode, showDetailColumns]);
 
     // 세로 Compact: 행 높이를 줄임
     const rowHeight = isVerticalCompact ? 32 : 50;
@@ -271,8 +416,15 @@ export const GanttChart: React.FC<GanttChartProps & {
     // Or maybe the user means the 'Control Bar' (View Mode buttons) + the column headers?
     // "상단의 간트 헤더(년월표시)까지는 모두 고정이 되어야 해" -> "Until the Gantt header (Year/Month display) must be fixed".
 
-    // Current approach: Make the top control bar sticky. 
+    // Current approach: Make the top control bar sticky.
     // For the SVG header, we'll try to apply a CSS class.
+
+    // Sync header scroll with body scroll
+    const handleBodyScroll = () => {
+        if (headerScrollRef.current && bodyScrollRef.current) {
+            headerScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft;
+        }
+    };
 
     if (!result.tasks || result.tasks.length === 0) {
         return (
@@ -282,89 +434,71 @@ export const GanttChart: React.FC<GanttChartProps & {
         );
     }
 
-    // Refs for scroll synchronization
-    const headerScrollRef = React.useRef<HTMLDivElement>(null);
-    const bodyScrollRef = React.useRef<HTMLDivElement>(null);
-
-    // Sync header scroll with body scroll
-    const handleBodyScroll = () => {
-        if (headerScrollRef.current && bodyScrollRef.current) {
-            headerScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft;
-        }
-    };
-
     return (
         <div ref={containerRef} className="bg-white rounded-xl shadow-lg border border-gray-100 relative flex flex-col h-full overflow-hidden">
             {/* Control Bar - Always Top */}
             <div className="flex-none p-4 border-b border-gray-100 flex justify-between items-center bg-white z-20 shadow-sm relative">
-                <h3 className="text-lg font-bold text-gray-800">공정표 (Gantt Chart)</h3>
+                <h3 className="text-lg font-bold text-gray-800">공정표</h3>
                 <div className="flex items-center gap-3">
-                    {/* Today Button */}
-                    <button
-                        onClick={() => {
-                            const container = document.getElementById('gantt-scroll-container');
-                            if (container) {
-                                // Scroll to show current date area
-                                const today = new Date();
-                                const startDate = result.tasks[0]?.start || today;
-                                const daysDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-                                const columnWidth = isHorizontalCompact ? compactColumnWidth : (viewMode === ViewMode.Month ? 100 : 40);
-                                let scrollPosition = 0;
-                                if (viewMode === ViewMode.Month) {
-                                    scrollPosition = (daysDiff / 30) * columnWidth;
-                                } else if (viewMode === ViewMode.Week) {
-                                    scrollPosition = (daysDiff / 7) * columnWidth;
-                                } else {
-                                    scrollPosition = daysDiff * columnWidth;
-                                }
-                                container.scrollLeft = Math.max(0, scrollPosition - 200);
-                            }
-                        }}
-                        className="px-3 py-1.5 text-sm rounded-lg border border-orange-300 bg-orange-50 text-orange-600 hover:bg-orange-100 transition-all flex items-center gap-1"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Today
-                    </button>
                     {/* View Mode Selection */}
                     <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
-                        <button onClick={() => setViewMode(ViewMode.Day)} className={`px-3 py-1 text-sm rounded-md transition-all ${viewMode === ViewMode.Day ? 'bg-white shadow text-indigo-600 font-medium' : 'text-gray-500 hover:text-gray-700'}`}>Day</button>
-                        <button onClick={() => setViewMode(ViewMode.Week)} className={`px-3 py-1 text-sm rounded-md transition-all ${viewMode === ViewMode.Week ? 'bg-white shadow text-indigo-600 font-medium' : 'text-gray-500 hover:text-gray-700'}`}>Week</button>
-                        <button onClick={() => setViewMode(ViewMode.Month)} className={`px-3 py-1 text-sm rounded-md transition-all ${viewMode === ViewMode.Month ? 'bg-white shadow text-indigo-600 font-medium' : 'text-gray-500 hover:text-gray-700'}`}>Month</button>
+                        <Button onClick={() => setViewMode(ViewMode.Day)} variant="ghost" size="sm" className={`px-3 py-1 text-sm rounded-md h-auto ${viewMode === ViewMode.Day ? 'bg-white shadow text-indigo-600 font-medium hover:bg-white' : 'text-gray-500 hover:text-gray-700 hover:bg-transparent'}`}>Day</Button>
+                        <Button onClick={() => setViewMode(ViewMode.Week)} variant="ghost" size="sm" className={`px-3 py-1 text-sm rounded-md h-auto ${viewMode === ViewMode.Week ? 'bg-white shadow text-indigo-600 font-medium hover:bg-white' : 'text-gray-500 hover:text-gray-700 hover:bg-transparent'}`}>Week</Button>
+                        <Button onClick={() => setViewMode(ViewMode.Month)} variant="ghost" size="sm" className={`px-3 py-1 text-sm rounded-md h-auto ${viewMode === ViewMode.Month ? 'bg-white shadow text-indigo-600 font-medium hover:bg-white' : 'text-gray-500 hover:text-gray-700 hover:bg-transparent'}`}>Month</Button>
                     </div>
                     {/* Compact Options */}
                     <div className="flex items-center gap-1.5">
                         {/* 가로 Compact */}
-                        <button
+                        <Button
                             onClick={() => setIsHorizontalCompact(!isHorizontalCompact)}
                             title="가로 압축"
-                            className={`px-2.5 py-1.5 text-sm rounded-lg border transition-all flex items-center gap-1 ${
+                            variant={isHorizontalCompact ? "default" : "outline"}
+                            size="sm"
+                            className={`flex items-center gap-1 ${
                                 isHorizontalCompact
-                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow font-medium'
-                                    : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-300 hover:bg-indigo-50'
+                                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow'
+                                    : 'text-gray-600 hover:border-indigo-300 hover:bg-indigo-50'
                             }`}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                             </svg>
                             가로
-                        </button>
+                        </Button>
                         {/* 세로 Compact */}
-                        <button
+                        <Button
                             onClick={() => setIsVerticalCompact(!isVerticalCompact)}
                             title="세로 압축"
-                            className={`px-2.5 py-1.5 text-sm rounded-lg border transition-all flex items-center gap-1 ${
+                            variant={isVerticalCompact ? "default" : "outline"}
+                            size="sm"
+                            className={`flex items-center gap-1 ${
                                 isVerticalCompact
-                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow font-medium'
-                                    : 'bg-white border-gray-300 text-gray-600 hover:border-indigo-300 hover:bg-indigo-50'
+                                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow'
+                                    : 'text-gray-600 hover:border-indigo-300 hover:bg-indigo-50'
                             }`}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11l7-7 7 7M5 19l7-7 7 7" />
                             </svg>
                             세로
-                        </button>
+                        </Button>
+                        {/* 상세 컬럼 토글 */}
+                        <Button
+                            onClick={() => setShowDetailColumns(!showDetailColumns)}
+                            title="상세 컬럼 표시/숨김"
+                            variant={showDetailColumns ? "default" : "outline"}
+                            size="sm"
+                            className={`flex items-center gap-1 ${
+                                showDetailColumns
+                                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow'
+                                    : 'text-gray-600 hover:border-indigo-300 hover:bg-indigo-50'
+                            }`}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+                            </svg>
+                            상세
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -384,22 +518,13 @@ export const GanttChart: React.FC<GanttChartProps & {
                         .header-pane .bar, .header-pane .bar-wrapper { display: none !important; }
                         /* Ensure text is visible */
                         .header-pane text { fill: #374151 !important; }
-                        ${viewMode === ViewMode.Day ? `
-                        /* Day view: Hide weekday names in bottom calendar row */
-                        .header-pane ._9w8d5,
-                        .header-pane [class*="calendarBottom"] text:last-child {
-                            display: none !important;
-                        }
-                        .header-pane svg g g text:nth-of-type(2) {
-                            opacity: 0 !important;
-                        }
-                        ` : ''}
                     `}</style>
                     <div className="header-pane" style={{ width: '100%', height: '100%' }}>
                         <Gantt
-                            tasks={result.tasks}
+                            tasks={tasksWithLanguage}
                             viewMode={viewMode}
                             locale="ko"
+                            todayColor="transparent"
                             fontFamily="Pretendard, sans-serif"
                             fontSize={isVerticalCompact ? "12px" : "14px"}
                             rowHeight={rowHeight}
@@ -413,9 +538,13 @@ export const GanttChart: React.FC<GanttChartProps & {
                                     headerHeight={headerHeight}
                                     onExpandAll={onExpandAll || (() => { })}
                                     onCollapseAll={onCollapseAll || (() => { })}
+                                    showDetailColumns={showDetailColumns}
+                                    language={language}
+                                    onLanguageToggle={handleLanguageToggle}
                                 />
                             )}
                             TaskListTable={() => <div />} // Empty table for header pane
+                            TooltipContent={(props) => <CustomTooltip {...props} />}
                         />
                     </div>
                 </div>
@@ -425,18 +554,24 @@ export const GanttChart: React.FC<GanttChartProps & {
                 <div
                     ref={bodyScrollRef}
                     onScroll={handleBodyScroll}
-                    className="flex-1 w-full overflow-auto relative"
+                    className="flex-1 w-full overflow-scroll relative"
                     id="gantt-scroll-container"
                 >
                     <style>{`
                         /* Hide Header in Body Pane (Double safety) */
                         .body-pane .calendar { display: none !important; }
+                        /* Bar label text color - dark gray for better visibility on light backgrounds */
+                        .body-pane text { fill: #111827 !important; font-weight: 300; font-size: 13px; }
+                        .body-pane .barLabel text { fill: #111827 !important; font-weight: 300; font-size: 13px; }
+                        /* All SVG text in gantt area */
+                        #gantt-scroll-container text { fill: #111827 !important; }
                     `}</style>
-                    <div className="body-pane" style={{ width: '100%', minHeight: '100%' }}>
+                    <div className="body-pane" style={{ width: '100%', minHeight: '100%', position: 'relative' }}>
                         <Gantt
-                            tasks={result.tasks}
+                            tasks={tasksWithLanguage}
                             viewMode={viewMode}
                             locale="ko"
+                            todayColor="transparent"
                             arrowColor="#cbd5e1"
                             fontFamily="Pretendard, sans-serif"
                             fontSize={isVerticalCompact ? "12px" : "14px"}
@@ -447,7 +582,8 @@ export const GanttChart: React.FC<GanttChartProps & {
                             barCornerRadius={isVerticalCompact ? 2 : 4}
                             // Hide Header, Show Table
                             TaskListHeader={() => <div />} // Empty header for body pane
-                            TaskListTable={(props) => <TaskListTable {...props} rowHeight={rowHeight} onExpanderClick={onExpanderClick} onColorChange={onColorChange || (() => { })} />}
+                            TaskListTable={(props) => <TaskListTable {...props} rowHeight={rowHeight} onExpanderClick={onExpanderClick} onColorChange={onColorChange || (() => { })} showDetailColumns={showDetailColumns} language={language} />}
+                            TooltipContent={(props) => <CustomTooltip {...props} />}
                             onExpanderClick={onExpanderClick}
                         />
                     </div>

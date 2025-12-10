@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
-import { X, FolderOpen, Save, Trash2, Upload, AlertCircle } from 'lucide-react';
+import { FolderOpen, Save, Trash2, Upload, AlertCircle } from 'lucide-react';
 import type { SavedProject } from '../utils/storage';
 import { formatRelativeTime } from '../utils/storage';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface ProjectManagerModalProps {
     isOpen: boolean;
@@ -41,50 +49,40 @@ export const ProjectManagerModal: React.FC<ProjectManagerModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-lg">
+                <DialogHeader className="border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white -m-6 mb-0 px-6 py-4">
                     <div className="flex items-center gap-3">
                         <div className="bg-indigo-100 p-2 rounded-lg">
                             <FolderOpen className="w-5 h-5 text-indigo-600" />
                         </div>
-                        <h2 className="text-lg font-bold text-gray-800">프로젝트 관리</h2>
+                        <DialogTitle className="text-lg font-bold text-gray-800">프로젝트 관리</DialogTitle>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                        <X className="w-5 h-5 text-gray-500" />
-                    </button>
-                </div>
+                    <DialogDescription className="sr-only">
+                        프로젝트를 저장하고 불러올 수 있습니다
+                    </DialogDescription>
+                </DialogHeader>
 
                 {/* Save Current Button */}
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                    <button
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 -mx-6">
+                    <Button
                         onClick={() => {
                             onSave();
                             // Don't close - let user see it was saved
                         }}
                         disabled={!currentProjectName}
-                        className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold transition-all ${
+                        className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold ${
                             currentProjectName
                                 ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : ''
                         }`}
+                        variant={currentProjectName ? "default" : "secondary"}
                     >
                         <Save className="w-4 h-4" />
                         {currentProjectName
                             ? `"${currentProjectName}" 저장하기`
                             : '프로젝트를 먼저 입력하세요'}
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Project List */}
@@ -114,28 +112,33 @@ export const ProjectManagerModal: React.FC<ProjectManagerModalProps> = ({
                                     </div>
 
                                     <div className="flex items-center gap-2 ml-3">
-                                        <button
+                                        <Button
                                             onClick={() => handleLoad(project.id)}
-                                            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="flex items-center gap-1 text-indigo-600 hover:bg-indigo-100"
                                         >
                                             <Upload className="w-3.5 h-3.5" />
                                             불러오기
-                                        </button>
+                                        </Button>
 
                                         {deleteConfirmId === project.id ? (
-                                            <button
+                                            <Button
                                                 onClick={() => handleDelete(project.id)}
-                                                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                                                size="sm"
+                                                className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white"
                                             >
                                                 확인
-                                            </button>
+                                            </Button>
                                         ) : (
-                                            <button
+                                            <Button
                                                 onClick={() => handleDelete(project.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100"
                                             >
                                                 <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            </Button>
                                         )}
                                     </div>
                                 </div>
@@ -145,12 +148,12 @@ export const ProjectManagerModal: React.FC<ProjectManagerModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-3 border-t border-gray-100 bg-gray-50">
+                <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 -mx-6 -mb-6">
                     <p className="text-xs text-gray-400 text-center">
                         프로젝트는 브라우저 로컬 스토리지에 저장됩니다
                     </p>
                 </div>
-            </div>
-        </div>
+            </DialogContent>
+        </Dialog>
     );
 };
