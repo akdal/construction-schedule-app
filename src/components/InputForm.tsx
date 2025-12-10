@@ -238,30 +238,30 @@ export const InputForm: React.FC<InputFormProps> = ({ onCalculate }) => {
                     <Label className="block text-sm font-medium text-gray-700 mb-2">예상 공사비 (Total & Per Py)</Label>
 
                     {/* Dual Inputs Grid */}
-                    <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="grid grid-cols-2 gap-3 mb-2">
                         {/* Total Cost Input */}
                         <div className="relative group">
-                            <Label className="text-[10px] text-gray-500 absolute top-1 left-2">총 공사비</Label>
+                            <Label className="text-xs text-gray-500 absolute top-1.5 left-2.5">총 공사비</Label>
                             <Input
                                 type="text"
                                 name="totalCostDisplay"
                                 value={formatNumber(totalCost)}
                                 onChange={handleTotalCostChange}
                                 placeholder="총액 입력"
-                                className="w-full pl-2 pr-2 pt-5 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-right text-sm font-medium"
+                                className="w-full pl-2.5 pr-2.5 pt-7 pb-3 h-14 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-right text-base font-semibold"
                             />
                         </div>
 
                         {/* Per Py Input */}
                         <div className="relative group">
-                            <Label className="text-[10px] text-gray-500 absolute top-1 left-2">평당 단가</Label>
+                            <Label className="text-xs text-gray-500 absolute top-1.5 left-2.5">평당 단가</Label>
                             <Input
                                 type="text"
                                 name="costPerPyInput"
                                 value={formatNumber(costPerPyInput)}
                                 onChange={handleCostPerPyChange}
                                 placeholder="평당 입력"
-                                className="w-full pl-2 pr-2 pt-5 pb-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-right text-sm font-medium"
+                                className="w-full pl-2.5 pr-2.5 pt-7 pb-3 h-14 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-right text-base font-semibold"
                             />
                         </div>
                     </div>

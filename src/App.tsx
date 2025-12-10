@@ -34,6 +34,15 @@ function App() {
     setSavedProjects(getSavedProjects());
   }, []);
 
+  // Update document title based on current project
+  useEffect(() => {
+    if (currentInput?.name) {
+      document.title = `${currentInput.name} | SJ Scheduler`;
+    } else {
+      document.title = 'SJ Scheduler';
+    }
+  }, [currentInput?.name]);
+
   // Compute tasks with dynamic progress based on todayDate (기준일)
   const scheduleResultWithProgress = useMemo(() => {
     if (!scheduleResult) return null;
@@ -375,10 +384,9 @@ function App() {
         {/* Left Sidebar: Tabbed Input Form & Assumptions - Independent Scroll */}
         <aside
           className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out flex-none
-            fixed md:relative inset-y-0 left-0 z-50 md:z-auto
+            fixed md:relative top-20 md:top-0 bottom-0 left-0 z-50 md:z-auto h-[calc(100vh-80px)] md:h-auto
             ${isSidebarOpen ? 'w-[85vw] sm:w-80 md:w-96 translate-x-0' : 'w-0 -translate-x-full opacity-0 md:opacity-100'}
           `}
-          style={{ height: 'calc(100vh - 80px)', top: '80px' }}
         >
           {/* Tab Headers */}
           <div className="flex-none border-b border-gray-200 bg-gray-50">
