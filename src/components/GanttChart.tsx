@@ -675,6 +675,11 @@ export const GanttChart: React.FC<GanttChartProps & {
                         .body-pane .barLabel text { fill: #111827 !important; font-weight: 300; font-size: 13px; }
                         /* All SVG text in gantt area */
                         #gantt-scroll-container text { fill: #111827 !important; }
+                        /* Fix tooltip position - adjust for our custom layout */
+                        .body-pane > div > div:last-child {
+                            position: fixed !important;
+                            z-index: 9999 !important;
+                        }
                     `}</style>
                     <div className="body-pane" style={{ width: '100%', minHeight: '100%', position: 'relative' }}>
                         <Gantt

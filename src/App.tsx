@@ -8,7 +8,7 @@ import { DashboardSummary } from './components/DashboardSummary';
 import { GanttChart } from './components/GanttChart';
 import { LogicExplainer } from './components/LogicExplainer';
 import { ProjectManagerModal } from './components/ProjectManagerModal';
-import { Calculator, Download, Building, Settings, FolderOpen } from 'lucide-react';
+import { Calculator, Download, Building, Settings, FolderOpen, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { getSavedProjects, saveProject, loadProject, deleteProject } from './utils/storage';
@@ -28,6 +28,7 @@ function App() {
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [lastSavedState, setLastSavedState] = useState<string | null>(null); // JSON snapshot of last saved state
 
   // Load saved projects on mount
   useEffect(() => {
@@ -51,6 +52,25 @@ function App() {
       tasks: applyProgressToTasks(scheduleResult.tasks, todayDate)
     };
   }, [scheduleResult, todayDate]);
+
+  // Generate current state snapshot for change detection
+  const getCurrentStateSnapshot = () => {
+    if (!currentInput) return null;
+    return JSON.stringify({
+      input: {
+        ...currentInput,
+        startDate: currentInput.startDate.toISOString()
+      },
+      assumptions
+    });
+  };
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    if (!currentProjectId || !currentInput) return false;
+    const currentSnapshot = getCurrentStateSnapshot();
+    return currentSnapshot !== lastSavedState;
+  }, [currentInput, assumptions, currentProjectId, lastSavedState]);
 
   const handleCalculate = (input: ProjectInput) => {
     setCurrentInput(input);
@@ -253,11 +273,32 @@ function App() {
   const [isDashboardOpen, setIsDashboardOpen] = useState(true);
 
   // Project management handlers
+  // Update existing project (quick save)
+  const handleQuickSave = () => {
+    if (!currentInput || !currentProjectId) return;
+    saveProject(currentInput, assumptions, currentProjectId);
+    setSavedProjects(getSavedProjects());
+    setLastSavedState(getCurrentStateSnapshot());
+  };
+
+  // Save current project (update if exists, create new if not)
   const handleSaveProject = () => {
     if (!currentInput) return;
     const saved = saveProject(currentInput, assumptions, currentProjectId || undefined);
     setCurrentProjectId(saved.id);
     setSavedProjects(getSavedProjects());
+    setLastSavedState(getCurrentStateSnapshot());
+  };
+
+  // Save as new project with new name
+  const handleSaveAsNew = (newName: string) => {
+    if (!currentInput) return;
+    const newInput = { ...currentInput, name: newName };
+    const saved = saveProject(newInput, assumptions); // No existingId = create new
+    setCurrentInput(newInput);
+    setCurrentProjectId(saved.id);
+    setSavedProjects(getSavedProjects());
+    setLastSavedState(getCurrentStateSnapshot());
   };
 
   const handleLoadProject = (id: string) => {
@@ -279,6 +320,15 @@ function App() {
       tasks,
       costPerPy
     });
+
+    // Set last saved state for change detection
+    setLastSavedState(JSON.stringify({
+      input: {
+        ...loaded.input,
+        startDate: loaded.input.startDate.toISOString()
+      },
+      assumptions: loaded.assumptions
+    }));
   };
 
   const handleDeleteProject = (id: string) => {
@@ -337,6 +387,17 @@ function App() {
             <FolderOpen className="w-4 h-4" />
             <span className="hidden sm:inline">프로젝트 관리</span>
           </Button>
+          {hasUnsavedChanges && (
+            <Button
+              onClick={handleQuickSave}
+              size="sm"
+              className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white shadow-sm animate-pulse"
+              title="변경사항 저장"
+            >
+              <Save className="w-4 h-4" />
+              <span className="hidden sm:inline">저장</span>
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -363,6 +424,7 @@ function App() {
         savedProjects={savedProjects}
         currentProjectName={currentInput?.name || null}
         onSave={handleSaveProject}
+        onSaveAsNew={handleSaveAsNew}
         onLoad={handleLoadProject}
         onDelete={handleDeleteProject}
       />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FolderOpen, Save, Trash2, Upload, AlertCircle } from 'lucide-react';
+import { FolderOpen, Save, Trash2, Upload, AlertCircle, Copy } from 'lucide-react';
 import type { SavedProject } from '../utils/storage';
 import { formatRelativeTime } from '../utils/storage';
 import {
@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface ProjectManagerModalProps {
     isOpen: boolean;
@@ -17,6 +18,7 @@ interface ProjectManagerModalProps {
     savedProjects: SavedProject[];
     currentProjectName: string | null;
     onSave: () => void;
+    onSaveAsNew: (newName: string) => void;
     onLoad: (id: string) => void;
     onDelete: (id: string) => void;
 }
@@ -27,10 +29,13 @@ export const ProjectManagerModal: React.FC<ProjectManagerModalProps> = ({
     savedProjects,
     currentProjectName,
     onSave,
+    onSaveAsNew,
     onLoad,
     onDelete,
 }) => {
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+    const [showSaveAsNew, setShowSaveAsNew] = useState(false);
+    const [newProjectName, setNewProjectName] = useState('');
 
     if (!isOpen) return null;
 
@@ -63,8 +68,9 @@ export const ProjectManagerModal: React.FC<ProjectManagerModalProps> = ({
                     </DialogDescription>
                 </DialogHeader>
 
-                {/* Save Current Button */}
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 -mx-6">
+                {/* Save Buttons */}
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 -mx-6 space-y-3">
+                    {/* Save Current */}
                     <Button
                         onClick={() => {
                             onSave();
@@ -83,6 +89,57 @@ export const ProjectManagerModal: React.FC<ProjectManagerModalProps> = ({
                             ? `"${currentProjectName}" 저장하기`
                             : '프로젝트를 먼저 입력하세요'}
                     </Button>
+
+                    {/* Save As New */}
+                    {currentProjectName && !showSaveAsNew && (
+                        <Button
+                            onClick={() => {
+                                setNewProjectName(currentProjectName + ' (복사)');
+                                setShowSaveAsNew(true);
+                            }}
+                            variant="outline"
+                            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold border-dashed"
+                        >
+                            <Copy className="w-4 h-4" />
+                            새로운 이름으로 저장
+                        </Button>
+                    )}
+
+                    {/* Save As New Input */}
+                    {showSaveAsNew && (
+                        <div className="flex gap-2">
+                            <Input
+                                type="text"
+                                value={newProjectName}
+                                onChange={(e) => setNewProjectName(e.target.value)}
+                                placeholder="새 프로젝트 이름"
+                                className="flex-1"
+                                autoFocus
+                            />
+                            <Button
+                                onClick={() => {
+                                    if (newProjectName.trim()) {
+                                        onSaveAsNew(newProjectName.trim());
+                                        setShowSaveAsNew(false);
+                                        setNewProjectName('');
+                                    }
+                                }}
+                                disabled={!newProjectName.trim()}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                                저장
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShowSaveAsNew(false);
+                                    setNewProjectName('');
+                                }}
+                                variant="ghost"
+                            >
+                                취소
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Project List */}
