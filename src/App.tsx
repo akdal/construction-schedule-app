@@ -273,14 +273,6 @@ function App() {
   const [isDashboardOpen, setIsDashboardOpen] = useState(true);
 
   // Project management handlers
-  // Update existing project (quick save)
-  const handleQuickSave = () => {
-    if (!currentInput || !currentProjectId) return;
-    saveProject(currentInput, assumptions, currentProjectId);
-    setSavedProjects(getSavedProjects());
-    setLastSavedState(getCurrentStateSnapshot());
-  };
-
   // Save current project (update if exists, create new if not)
   const handleSaveProject = () => {
     if (!currentInput) return;
@@ -387,12 +379,16 @@ function App() {
             <FolderOpen className="w-4 h-4" />
             <span className="hidden sm:inline">프로젝트 관리</span>
           </Button>
-          {hasUnsavedChanges && (
+          {currentInput && (
             <Button
-              onClick={handleQuickSave}
+              onClick={handleSaveProject}
               size="sm"
-              className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white shadow-sm animate-pulse"
-              title="변경사항 저장"
+              className={`flex items-center gap-1 text-white shadow-sm ${
+                hasUnsavedChanges
+                  ? 'bg-amber-500 hover:bg-amber-600 animate-pulse'
+                  : 'bg-gray-400 hover:bg-gray-500'
+              }`}
+              title="저장"
             >
               <Save className="w-4 h-4" />
               <span className="hidden sm:inline">저장</span>
